@@ -814,6 +814,8 @@ class AutoTestPlane(AutoTest):
 #            raise NotAchievedException("Sensor healthy when it shouldn't be")
         self.set_parameter("SIM_RC_FAIL", 0)
         self.drain_mav_unparsed()
+        # have to allow time for RC to be fetched from SITL
+        self.delay_sim_time(0.5)
         m = self.mav.recv_match(type='SYS_STATUS', blocking=True)
         self.progress("Testing receiver enabled")
         if (not (m.onboard_control_sensors_enabled & receiver_bit)):
@@ -1103,14 +1105,6 @@ class AutoTestPlane(AutoTest):
         # it as part of the loiter-at-home!
         self.test_fence_breach_circle_at(self.home_position_as_mav_location(),
                                          disable_on_breach=True)
-
-    def location_offset_ne(self, location, north, east):
-        '''move location in metres'''
-        print("old: %f %f" % (location.lat, location.lng))
-        (lat, lng) = mp_util.gps_offset(location.lat, location.lng, east, north)
-        location.lat = lat
-        location.lng = lng
-        print("new: %f %f" % (location.lat, location.lng))
 
     def test_fence_rtl_rally(self):
         ex = None
@@ -1425,6 +1419,10 @@ class AutoTestPlane(AutoTest):
             ("ADSB",
              "Test ADSB",
              self.test_adsb),
+
+            ("AdvancedFailsafe",
+             "Test Advanced Failsafe",
+             self.test_advanced_failsafe),
 
             ("LogDownLoad",
              "Log download",
